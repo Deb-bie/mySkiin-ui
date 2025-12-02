@@ -3,6 +3,7 @@ import { useState } from 'react'
 import ImageUpload from '../ImageUpload'
 import { CreateProductModalProps } from '@/app/models/model'
 import Select, { MultiValue, SingleValue } from "react-select";
+import { useAppState } from '@/app/hooks/useAppState';
 
 
 type Option = {
@@ -11,15 +12,18 @@ type Option = {
 };
 
 export default function CreatePostModal({ isOpen, onClose, onSubmit }: CreateProductModalProps) {
+  const { state } = useAppState()
   const [formData, setFormData] = useState({
     name: '',
     subtitle: '',
-    brand: '',
+    brandId: '',
+    brandName: '',
+    categoryIds: [] as string[],
+    categoryNames: [] as string[],
     description: '',
     tags: [] as string[],
-    skinTypes: '',
+    skinType: [] as string[],
     keyIngredients: [] as string[],
-    category: [] as string[],
     steps: '',
     image: '',
     imageAlt: ''
@@ -29,29 +33,22 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit }: CreatePro
   const [keyIngredientsInput, setKeyIngredientsInput] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<MultiValue<Option>>([]);
   const [selectedBrand, setSelectedBrand] = useState<SingleValue<Option>>();
-  const [selectedSkinType, setSelectedSkinType] = useState<SingleValue<Option>>();
+  const [selectedSkinTypes, setSelectedSkinTypes] = useState<MultiValue<Option>>([]);
   const [isSubmitting, setIsSubmitting] = useState(false)
-
   const [tags, setTags] = useState<any>([]);
   const [input, setInput] = useState("");
 
-  
-  const brands: Option[] =[
-    { value: "CeraVe", label: "CeraVe" },
-    { value: "The Ordinary", label: "The Ordinary" },
-    { value: "Cetaphil", label: "Cetaphil" },
-    { value: "Good Molecules", label: "Good Molecules" },
-    { value: "La Roche-Posay", label: "La Roche-Posay" },
-    { value: "Neutrogena", label: "Neutrogena" },
-  ];
+  const brands = state.brands.map(brand => ({
+    value: brand.id,
+    label: brand.name
+  }))
 
-  const categories: Option[] =[
-    { value: "Cleanser", label: "Cleanser" },
-    { value: "Toner", label: "Toner" },
-    { value: "Exfoliant", label: "Exfoliant" },
-    { value: "Serum", label: "Serum" },
-    { value: "Moisturizer", label: "Moisturizer" },
-  ];
+  const categories = selectedBrand 
+  ? (state.dict[selectedBrand.value] || []).map(category => ({
+      value: category.id,
+      label: category.name
+    }))
+  : []
 
   const skinTypes: Option[] =[
     { value: "Normal", label: "Normal" },
@@ -59,7 +56,9 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit }: CreatePro
     { value: "Oily", label: "Oily" },
     { value: "Sensitive", label: "Sensitive" },
     { value: "Combination", label: "Combination" },
-  ];
+    { value: "All", label: "All" },
+    { value: "Other", label: "Other" },
+  ]
 
 
   const addTag = (e: any) => {
@@ -99,27 +98,31 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit }: CreatePro
     setFormData(
       {
         ...formData,
-        brand: selectedBrand?.value || formData.brand,
-        skinTypes: selectedSkinType?.value || formData.skinTypes,
-        category: (selectedCategories || []).map((c) => c.value),
+        brandId: selectedBrand?.value || formData.brandId,
+        brandName: selectedBrand?.label || formData.brandName,
+        skinType: (selectedSkinTypes || []).map((s) => s.label),
+        categoryIds: (selectedCategories || []).map((c) => c.value),
+        categoryNames: (selectedCategories || []).map((c) => c.label),
         keyIngredients: keyIngredients,
         tags: tags,
       }
     )
 
-    if (formData.name && formData.brand && !isSubmitting) {
+    if (formData.name && formData.brandId && formData.brandName && !isSubmitting) {
       setIsSubmitting(true)
       try {
         await onSubmit(formData)
         setFormData({ 
           name: '',
           subtitle: '',
-          brand: '',
+          brandId: '',
+          brandName: '',
+          categoryIds: [] as string[],
+          categoryNames: [] as string[],
           description: '',
           tags: [] as string[],
-          skinTypes: '',
+          skinType: [] as string[],
           keyIngredients: [] as string[],
-          category: [] as string[],
           steps: '',
           image: '',
           imageAlt: '' 
@@ -137,12 +140,14 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit }: CreatePro
     setFormData({ 
       name: '',
       subtitle: '',
-      brand: '',
+      brandId: '',
+      brandName: '',
+      categoryIds: [] as string[],
+      categoryNames: [] as string[],
       description: '',
       tags: [],
-      skinTypes: '',
+      skinType: [] as string[],
       keyIngredients: [],
-      category: [],
       steps: '',
       image: '',
       imageAlt: '' 
@@ -209,7 +214,10 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit }: CreatePro
               <Select
                 options={brands}
                 value={selectedBrand}
-                onChange={(brand) => setSelectedBrand(brand)}
+                onChange={(brand) => {
+                  setSelectedBrand(brand)
+                  setSelectedCategories([])
+                }}
                 className="basic-multi-select"
                 classNamePrefix="select"
                 placeholder="Select categories..."
@@ -222,9 +230,10 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit }: CreatePro
               </label>
 
               <Select
+                isMulti
                 options={skinTypes}
-                value={selectedSkinType}
-                onChange={(skinType) => setSelectedSkinType(skinType)}
+                value={selectedSkinTypes}
+                onChange={(skinType) => setSelectedSkinTypes(skinType)}
                 className="basic-multi-select"
                 classNamePrefix="select"
                 placeholder="Select categories..."
@@ -234,21 +243,23 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit }: CreatePro
           </div>
 
           <div className='flex flex-row justify-between'>
-            <div className='w-[30%]'>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Product Category *
-              </label>
-              
-              <Select
-                isMulti
-                options={categories}
-                value={selectedCategories}
-                onChange={(category) => setSelectedCategories(category)}
-                className="basic-multi-select"
-                classNamePrefix="select"
-                placeholder="Select categories..."
-              />
-            </div>
+            {selectedBrand?.value && (
+              <div className='w-[30%]'>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Product Category *
+                </label>
+                
+                <Select
+                  isMulti
+                  options={categories}
+                  value={selectedCategories}
+                  onChange={(category) => setSelectedCategories(category)}
+                  className="basic-multi-select"
+                  classNamePrefix="select"
+                  placeholder="Select categories..."
+                />
+              </div>
+            )}
 
             <div className='w-[30%]'>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -280,7 +291,7 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit }: CreatePro
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={addTag}
-                  className="flex-grow outline-none py-1"
+                  className="grow outline-none py-1"
                   placeholder="Type and press Enter"
                 />
               </div>
@@ -316,7 +327,7 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit }: CreatePro
                   value={keyIngredientsInput}
                   onChange={(e) => setKeyIngredientsInput(e.target.value)}
                   onKeyDown={addKeyIngredient}
-                  className="flex-grow outline-none py-1"
+                  className="grow outline-none py-1"
                   placeholder="Type and press Enter"
                 />
               </div>
