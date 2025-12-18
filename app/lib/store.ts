@@ -110,8 +110,6 @@ class AppStore {
   async addProduct(postData: Omit<Product, 'id'>) {
     try {
       this.setState({ loading: true, error: null })
-      console.log("inside storeee....")
-      console.log(postData)
       await addProductToDB(postData)
       await this.loadProducts()
     } catch (error: any) {
@@ -125,8 +123,6 @@ class AppStore {
   async authAdmin(email: string, password: string) {
     try {
       this.setState({ loading: true, error: null })
-      console.log("inside storeee....")
-      console.log(email)
       return await authenticateAdmin(email, password)
     } catch (error: any) {
       this.setState({ error: error.message, loading: false })
@@ -137,37 +133,21 @@ class AppStore {
   async updateProduct(id: string, updates: Partial<Product>) {
     try {
       this.setState({ loading: true, error: null })
-      console.log("inside storeee....")
-      console.log(updates)
       await updateProductInDB(id, updates)
     } catch (error: any) {
       this.setState({ error: error.message, loading: false })
     }
-
-
-
-
-
-    // const products = this.state.products.map(product => 
-    //   product.id === id ? { ...product, ...updates } : product
-    // )
-    // this.setState({ products })
   }
 
   async deleteProduct(id: string) {
 
     try {
       this.setState({ loading: true, error: null })
-      console.log("inside storeee....")
-      console.log(id)
       await deleteProductFromDB(id)
       await this.loadProducts()
     } catch (error: any) {
       this.setState({ error: error.message, loading: false })
     }
-
-    // const products = this.state.products.filter(product => product.id !== id)
-    // this.setState({ products })
   }
 
   // Auth Actions
@@ -197,8 +177,6 @@ class AppStore {
   async addBrand(data: Omit<Brand, 'id'>) {
     try {
       this.setState({ loading: true, error: null })
-      console.log("inside storeee....")
-      console.log(data)
       await addBrandToDB(data)
       await this.loadBrands()
     } catch (error: any) {
@@ -209,9 +187,6 @@ class AppStore {
   async updateBrand(id: string, updates: Partial<Brand>) {
     try {
       this.setState({ loading: true, error: null })
-      console.log("inside storeee....")
-      console.log(updates)
-      console.log(id)
       await updateBrandInDB(id, updates)
       await this.loadBrands()
     } catch (error: any) {
@@ -222,16 +197,11 @@ class AppStore {
   async deleteBrand(id: string) {
     try {
       this.setState({ loading: true, error: null })
-      console.log("inside storeee....")
-      console.log(id)
       await deleteBrandFromDB(id)
       await this.loadBrands()
     } catch (error: any) {
       this.setState({ error: error.message, loading: false })
     }
-
-    // const products = this.state.products.filter(product => product.id !== id)
-    // this.setState({ products })
   }
 
 
@@ -276,8 +246,6 @@ class AppStore {
   async deleteCategory(brandId: string, categoryId: string) {
     try {
       this.setState({ loading: true, error: null })
-      console.log("inside storeee....")
-      console.log(brandId, categoryId)
       await removeCategoryFromBrandInDB(brandId, categoryId)
       await this.loadBrands()
       await this.loadCategoriesInABrand(categoryId)
@@ -302,8 +270,6 @@ class AppStore {
   async addCategoryToBrand(data: Omit<Category, 'id'>) {
     try {
       this.setState({ loading: true, error: null })
-      console.log("inside storeee add category to brand....")
-      console.log(data)
       await addCategoryToBrandInDB(data)
       await this.loadBrands()
       await this.loadCategoriesInABrand(data.brandId)
@@ -311,8 +277,6 @@ class AppStore {
       this.setState({ error: error.message, loading: false })
     }
   }
-
-
 }
 
 export const appStore = new AppStore()

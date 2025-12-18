@@ -116,10 +116,6 @@ export const addProductToDB = async (data: Omit<Product, 'id' | 'status'>): Prom
     } else if (data.image) {
       imageUrl = data.image
     }
-
-    console.log("inside services.....")
-    console.log(imageUrl)
-    console.log(data)
     
     // Create products document
     const docRef = await addDoc(collection(db, 'products'), {
@@ -128,9 +124,6 @@ export const addProductToDB = async (data: Omit<Product, 'id' | 'status'>): Prom
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     })
-
-    console.log("after sending...")
-    console.log(docRef.id)
     
     return docRef.id
   } catch (error) {
@@ -300,7 +293,6 @@ export const getUser = async (userId: string): Promise<User | null> => {
 
 export const addBrandToDB = async (data: Omit<Brand, 'id' | 'status'>): Promise<string> => {
   try {
-    console.log("adding brand in services: ", data)
     
     // Create brands document
     const docRef = await addDoc(collection(db, 'brands'), {
@@ -308,9 +300,6 @@ export const addBrandToDB = async (data: Omit<Brand, 'id' | 'status'>): Promise<
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     })
-
-    console.log("after sending...")
-    console.log(docRef.id)
     
     return docRef.id
   } catch (error) {
@@ -330,8 +319,6 @@ export const updateBrandInDB = async (
     
     await updateDoc(brandRef, {
       ...data,
-      // name: data.name,
-      // categories: data.categories?.map((cat) => cat.id === )
       updatedAt: Timestamp.now(),
     })
   } catch (error) {
@@ -364,13 +351,8 @@ export const getAllBrands = async (): Promise<Brand[]> => {
           id: doc.id,
           ...doc.data(),
           date: doc.data().date
-          // date: doc.data().createdAt?.toDate().toISOString().split('T')[0] || new Date().toISOString().split('T')[0]
       } as unknown as Brand)
     })
-
-
-    console.log("brands:....")
-    console.log(brands)
     
     return brands
   } catch (error) {
@@ -406,11 +388,8 @@ export const getBrand = async (brandId: string): Promise<Brand | null> => {
 
 export const addCategoryToBrandInDB = async (data: Omit<Category, 'id'>): Promise<string> => {
   try {
-    console.log("Adding Category to db....")
-
     const categoriesRef = collection(db, "brands", data.brandId, "categories");
-    console.log("brandid; ", data.brandId)
-    console.log("categories. ref: ", categoriesRef.path)
+
     await addDoc(categoriesRef, {
       ...data,
       createdAt: Timestamp.now(),
@@ -432,8 +411,6 @@ export const updateCategoryInDB = async (
     data: string
 ): Promise<void> => {
   try {
-    console.log("Updating Category to db....")
-
     const categoriesRef = doc(db, "brands", brandId, "categories", categoryId);
     
     await updateDoc(categoriesRef, {
@@ -451,11 +428,8 @@ export const updateCategoryInDB = async (
 
 export const removeCategoryFromBrandInDB = async (brandId: string, categoryId: string): Promise<void> => {
   try {
-    console.log("removing Category to db....")
 
     const categoriesRef = doc(db, "brands", brandId, "categories", categoryId);
-    console.log("brandid; ", brandId)
-    console.log("categories. ref: ", categoriesRef.path)
     
     await deleteDoc(categoriesRef)
   } catch (error) {

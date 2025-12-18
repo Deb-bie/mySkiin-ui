@@ -7,8 +7,6 @@ export const CategoryItem = ({ category, brand, onDelete, onProductClick, onEdit
     const {state} = useAppState()
     const [isExpanded, setIsExpanded] = useState(false)
 
-    console.log("products... ", state.products)
-    console.log("cate... ", category)
 
     const getProductsByCategory = (brandId: string, category: string) => {
         return state.products.filter(product => product.brandId === brandId && product.categoryNames.some((c) => c === category))

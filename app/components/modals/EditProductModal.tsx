@@ -174,17 +174,12 @@ export default function EditPostModal({ isOpen, onClose, onSubmit, product }: Ed
       brandName: selectedBrand?.label || '',
       categoryId: selectedCategories.map(cat => cat.value),
       categoryNames: selectedCategories.map(cat => cat.label),
-      // skinTypes: selectedSkinType?.value || '',
       skinType: (selectedSkinTypes || []).map((s) => s.label),
       tags: tags,
       keyIngredients: keyIngredients
     }
 
-    console.log("formmmm: ", updatedProduct)
-
-
     onSubmit(updatedProduct)
-    // }
   }
 
   if (!isOpen || !product) return null

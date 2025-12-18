@@ -3,7 +3,7 @@
 import { CategoryItem } from '@/app/components/CategoryItem'
 import AddBrandModal from '@/app/components/modals/AddBrandModal'
 import { useAppState } from '@/app/hooks/useAppState'
-import { Brand, Product } from '@/app/models/model'
+import { Brand, Category, Product } from '@/app/models/model'
 import { useState, useEffect } from 'react'
 
 
@@ -26,20 +26,31 @@ export default function BrandsPage() {
   const [editBrandName, setEditBrandName] = useState('')
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [alertBanner, setAlertBanner] = useState<{ message: string, type: 'error' | 'warning' | 'success' } | null>(null)
-  const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showAddBrandModal, setShowAddBrandModal] = useState(false)
+  const [dict, setDict] = useState<Record<string, Category[]>>({});
 
   const categories = async (id: string) => {
-    const fetched = await categoriesInBrand(id)
-    state.dict = fetched ?? {}
-    console.log("cats: ", state.dict[id].length)
-    console.log("cat data: ", state.dict)
+    // const fetched = await categoriesInBrand(id)
+    // state.dict = fetched ?? {}
+    
+
+    const result = await categoriesInBrand(id);
+    const fetched = result?.[id] ?? [];
+
+    setDict(prev => ({
+      ...prev,
+      [id]: fetched,
+    }));
   }
 
   useEffect(() => {
-    state.brands.forEach(brand => categories(brand.id));
-  }, []);
+  if (state.brands.length === 0) return;
+
+  state.brands.forEach(brand => {
+    categories(brand.id);
+  });
+}, [state.brands]);
 
 
   const filteredBrands = state.brands.filter(brand =>
@@ -51,15 +62,15 @@ export default function BrandsPage() {
   }
   
   const handleAddBrand = (data: any) => {
-
-    if (brandExists(data.name)) {
+    try {
+      if (brandExists(data.name)) {
       setAlertBanner({
         message: `The brand "${data.name.trim()}" already exists!`,
         type: 'warning'
       })
       setTimeout(() => setAlertBanner(null), 5000)
       return
-    }
+    } 
 
     addBrand({
       ...data,
@@ -69,6 +80,12 @@ export default function BrandsPage() {
       author: 'Admin',
       status: 'published'
     })
+    } catch (error) {
+      setAlertBanner({
+        message: `Error:  "${error}"!`,
+        type: 'error'
+      })
+    }
 
     setShowAddBrandModal(false)
   }
@@ -104,7 +121,6 @@ export default function BrandsPage() {
         await updateBrand(updatedBrand.id, updatedBrand)
         
       } catch (error) {
-        console.error('Error updating brand details:', error)
         alert('Failed to update brand details. Please try again.')
       } finally {
         setIsSubmitting(false)
@@ -116,7 +132,6 @@ export default function BrandsPage() {
 
   const handleDeleteBrand = (id: string) => {
     const brandProducts = getProductsByBrand(id)
-     console.log("1we have set items...")
     if (brandProducts.length > 0) {
       setAlertBanner({
         message: `Cannot delete this brand because it has ${brandProducts.length} product(s) associated with it. Please remove or reassign the products first.`,
@@ -130,7 +145,6 @@ export default function BrandsPage() {
       brandId: id 
     })
 
-    console.log("we have set items...")
   }
 
   const confirmDeleteBrand = async () => {
@@ -138,7 +152,6 @@ export default function BrandsPage() {
       setIsSubmitting(true)
 
       try {
-        console.log("we are deleting brand")
         await deleteBrand(deleteConfirm.brandId)
       } catch (error) {
         console.error('Error deleting brand:', error)
@@ -256,8 +269,6 @@ export default function BrandsPage() {
     if (!editingCategoryTo || !renameCategory.trim()) {
       return
     }
-
-    console.log("ediding category: ", editingCategoryTo)
 
     const brandId = editingCategoryTo.brand?.id ?? editingCategoryTo.id ?? ''
     const brandName = editingCategoryTo.brand?.name ?? editingCategoryTo.name ?? ''
