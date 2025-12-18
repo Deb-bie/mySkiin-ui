@@ -1,34 +1,39 @@
 import { Timestamp } from "next/dist/server/lib/cache-handlers/types"
 
 export interface Product {
-    id: number
-    name: string
-    subtitle: string
-    brand: Brand
-    description: string
-    tags?: string[]
-    skinTypes?: string
-    keyIngredients?: string[]
-    category: string[]
-    steps?: string
-    image?: string
-    imageAlt?: string 
-    createdAt?: any
-    updatedAt?: any
+  id: string
+  name: string
+  subtitle: string
+  brandId: string
+  brandName: string
+  categoryId: string[]
+  categoryNames: string[]
+  description: string
+  tags?: string[]
+  skinType?: string[]
+  keyIngredients?: string[]
+  // category: string[]
+  steps?: string
+  image?: string
+  imageAlt?: string 
+  createdAt?: any
+  updatedAt?: any
 }
 
 
 export interface Brand {
     id: string
     name: string
-
-    categories: Category[]
     createdAt: Timestamp
+    updatedAt: Timestamp
 }
 
 export interface Category {
     id: string
-    name: String
+    name: string
+    brandId: string
+    createdAt: Timestamp
+    updatedAt: Timestamp
 }
 
 
@@ -85,7 +90,7 @@ export interface CreateProductModalProps {
 export interface EditProductModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (post: any) => void
+  onSubmit: (updates: any) => void
   product: any
 }
 
@@ -97,14 +102,19 @@ export interface ViewUserModalProps {
 }
 
 
-interface AddBrandModalProps {
+export interface AddBrandModalProps {
   isOpen: boolean
   onClose: () => void
   onSubmit: (brand: {
-    name: string,
-    categories: Category[]
+    name: string
   }) => void
 }
+
+
+export type Option = {
+  label: string;
+  value: string;
+};
 
 
 
