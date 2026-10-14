@@ -8,8 +8,9 @@ export default function Sidebar() {
   const menuItems = [
     { href: '/admin', label: 'Dashboard', icon: '📊' },
     { href: '/admin/users', label: 'Users', icon: '👥' },
-    { href: '/admin/products', label: 'Products', icon: '📝' },
-    { href: '/admin/brands', label: 'Brands', icon: '📝' },
+    { href: '/admin/products', label: 'Products', icon: '🧴' },
+    { href: '/admin/brands', label: 'Brands', icon: '🏷️' },
+    { href: '/admin/import', label: 'Import', icon: '📥' },
     { href: '/admin/analytics', label: 'Analytics', icon: '📈' },
     { href: '/admin/settings', label: 'Settings', icon: '⚙️' },
     { href: '/admin/others', label: 'Others', icon: '⚙️' },
@@ -35,7 +36,7 @@ export default function Sidebar() {
             key={item.href}
             href={item.href}
             className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-              pathname === item.href
+              pathname === item.href || (item.href !== '/admin' && pathname?.startsWith(item.href + '/'))
                 ? 'bg-indigo-50 text-indigo-600 font-semibold'
                 : 'text-gray-700 hover:bg-gray-50'
             }`}

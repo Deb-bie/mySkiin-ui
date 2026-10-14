@@ -73,12 +73,10 @@ export default function BrandsPage() {
     } 
 
     addBrand({
-      ...data,
-      name: data.name,
-      views: 0,
-      date: new Date().toISOString().split('T')[0],
-      author: 'Admin',
-      status: 'published'
+      name: data.name.trim(),
+      country: data.country || undefined,
+      website: data.website || undefined,
+      priceTier: data.priceTier || undefined,
     })
     } catch (error) {
       setAlertBanner({
@@ -168,7 +166,7 @@ export default function BrandsPage() {
   }
 
   const getProductsByCategory = (brandId: string, category: string) => {
-    return state.products.filter(product => product.brandId === brandId && product.categoryNames.map((c) => c === category))
+    return state.products.filter(product => product.brandId === brandId && (product.categoryNames ?? []).includes(category))
   }
 
   const handleDeleteCategory = (brandId: string, categoryId: string, categoryName: string) => {
@@ -451,7 +449,11 @@ export default function BrandsPage() {
                       <p className="text-indigo-100 text-sm">
                         {state.dict[brand.id]?.filter((b) => b.brandId === brand.id).length}
                         {state.dict[brand.id]?.filter((b) => b.brandId === brand.id).length === 1 ? ' category' : ' categories'}
+                        {' · '}{getProductsByBrand(brand.id).length} products
                       </p>
+                      {(brand.country || brand.priceTier) && (
+                        <p className="text-indigo-100 text-xs mt-1">{[brand.country, brand.priceTier].filter(Boolean).join(' · ')}</p>
+                      )}
                     </div>
                     
                     <div className="flex gap-2">

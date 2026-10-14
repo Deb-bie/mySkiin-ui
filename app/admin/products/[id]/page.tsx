@@ -3,6 +3,8 @@ import { useParams, useRouter } from 'next/navigation'
 import { useAppState } from '@/app/hooks/useAppState'
 import { useState } from 'react'
 import EditPostModal from '@/app/components/modals/EditProductModal'
+import ProductDetailsExtra from '@/app/components/ProductDetailsExtra'
+import { Product } from '@/app/models/model'
 
 
 // Helper function to format Firestore Timestamp
@@ -43,11 +45,8 @@ export default function ProductDetailPage() {
   const productId = params?.id as string
   const product = state.products.find(p => p.id === productId)
 
-  const handleUpdateProduct = (updatedProduct: any) => {
-    updateProduct(updatedProduct.id, {
-      ...updatedProduct,
-      updatedAt: new Date().toISOString()
-    })
+  const handleUpdateProduct = async (updatedProduct: Product) => {
+    await updateProduct(updatedProduct.id, updatedProduct)
     setShowEditModal(false)
   }
 
@@ -229,14 +228,16 @@ export default function ProductDetailPage() {
         )}
 
         {/* Steps */}
-        {product.steps && (
+        {(product.howToUse || product.steps) && (
           <div className="border-t border-gray-200 p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Usage Instructions</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">How to Use</h2>
             <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-              {product.steps}
+              {product.howToUse || product.steps}
             </p>
           </div>
         )}
+
+        <ProductDetailsExtra product={product} />
 
         {/* Metadata */}
         <div className="border-t border-gray-200 bg-gray-50 p-8">

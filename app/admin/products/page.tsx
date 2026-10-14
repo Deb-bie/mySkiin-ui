@@ -4,6 +4,8 @@ import { useAppState } from '@/app/hooks/useAppState'
 import CreatePostModal from '@/app/components/modals/CreateProductModal'
 import EditPostModal from '@/app/components/modals/EditProductModal'
 import { useRouter } from 'next/navigation'
+import { PRICE_TIERS, SKIN_TYPES } from '@/app/lib/constants'
+import { Product, ProductInput } from '@/app/models/model'
 
 export default function ProductsPage() {
   const router = useRouter()
@@ -19,13 +21,11 @@ export default function ProductsPage() {
   const [selectedBrand, setSelectedBrand] = useState<string>('')
   const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [selectedSkinType, setSelectedSkinType] = useState<string>('')
+  const [selectedTier, setSelectedTier] = useState<string>('')
 
-  const handleCreateProduct = (data: any) => {
-    addProduct({
-      ...data,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    })
+  // Errors are thrown back to the form so they show there and the modal stays open
+  const handleCreateProduct = async (data: ProductInput) => {
+    await addProduct(data)
     setShowCreateModal(false)
   }
 
@@ -34,11 +34,8 @@ export default function ProductsPage() {
     setShowEditModal(true)
   }
 
-  const handleUpdateProduct = (updatedProduct: any) => {
-    updateProduct(updatedProduct.id, {
-      ...updatedProduct,
-      updatedAt: new Date().toISOString()
-    })
+  const handleUpdateProduct = async (updatedProduct: Product) => {
+    await updateProduct(updatedProduct.id, updatedProduct)
     setShowEditModal(false)
     setEditingProduct(null)
   }
@@ -72,16 +69,13 @@ export default function ProductsPage() {
     return Array.from(categorySet).sort()
   }, [state.products])
 
-  const skinTypes = useMemo(() => {
-    const skinTypeSet = new Set(state.products.map(p => p.skinType || []).filter(Boolean))
-    return Array.from(skinTypeSet).sort()
-  }, [state.products])
 
   // Filter products
   const filteredProducts = useMemo(() => {
     return state.products.filter(product => {
       const matchesSearch = searchQuery === '' || 
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (product.name ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (product.brandName ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.subtitle?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -89,20 +83,22 @@ export default function ProductsPage() {
       const matchesBrand = selectedBrand === '' || product.brandName === selectedBrand
       const matchesCategory = selectedCategory === '' || 
         product.categoryNames?.includes(selectedCategory)
-      const matchesSkinType = selectedSkinType === '' || product.skinType?.includes(selectedSkinType)
+      const matchesSkinType = selectedSkinType === '' || product.skinType?.includes(selectedSkinType) || product.skinType?.includes('All')
+      const matchesTier = selectedTier === '' || product.priceTier === selectedTier
 
-      return matchesSearch && matchesBrand && matchesCategory && matchesSkinType
+      return matchesSearch && matchesBrand && matchesCategory && matchesSkinType && matchesTier
     })
-  }, [state.products, searchQuery, selectedBrand, selectedCategory, selectedSkinType])
+  }, [state.products, searchQuery, selectedBrand, selectedCategory, selectedSkinType, selectedTier])
 
   const clearFilters = () => {
     setSearchQuery('')
     setSelectedBrand('')
     setSelectedCategory('')
     setSelectedSkinType('')
+    setSelectedTier('')
   }
 
-  const activeFiltersCount = [selectedBrand, selectedCategory, selectedSkinType].filter(Boolean).length
+  const activeFiltersCount = [selectedBrand, selectedCategory, selectedSkinType, selectedTier].filter(Boolean).length
 
   return (
     <div className="space-y-6">
@@ -130,7 +126,7 @@ export default function ProductsPage() {
           </svg>
           <input
             type="text"
-            placeholder="Search products by name, description, or tags..."
+            placeholder="Search products by name, brand, description, or tags..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
@@ -179,9 +175,20 @@ export default function ProductsPage() {
             className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
           >
             <option value="">All Skin Types</option>
-            {/* {skinTypes.map(skinType => (
+            {SKIN_TYPES.filter(t => t !== 'All').map(skinType => (
               <option key={skinType} value={skinType}>{skinType}</option>
-            ))} */}
+            ))}
+          </select>
+
+          <select
+            value={selectedTier}
+            onChange={(e) => setSelectedTier(e.target.value)}
+            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          >
+            <option value="">All Price Tiers</option>
+            {PRICE_TIERS.map(tier => (
+              <option key={tier} value={tier}>{tier}</option>
+            ))}
           </select>
 
           {activeFiltersCount > 0 && (
@@ -224,8 +231,11 @@ export default function ProductsPage() {
             
             <div className="p-4">
               {/* Brand */}
-              <div className="text-xs text-gray-500 mb-1 font-medium">
-                {product.brandName}
+              <div className="flex items-center justify-between text-xs text-gray-500 mb-1 font-medium">
+                <span>{product.brandName}</span>
+                {product.priceTier && (
+                  <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-700">{product.priceTier}</span>
+                )}
               </div>
 
               {/* Product Name */}

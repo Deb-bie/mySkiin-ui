@@ -1,0 +1,37 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Admin = the dashboard account
+    function isAdmin() {
+      return request.auth != null &&
+             request.auth.token.email == 'tryskincare.ai@gmail.com';
+    }
+
+    // Brands: everyone can read, only admin can write
+    match /brands/{brandId} {
+      allow read: if true;
+      allow write: if isAdmin();
+
+      // Categories live under each brand. The rule above does not cover
+      // sub-collections, so without this block categories were denied.
+      match /categories/{categoryId} {
+        allow read: if true;
+        allow write: if isAdmin();
+      }
+    }
+
+    // Products: everyone can read, only admin can write
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Users: each user reads/writes their own data; the admin can read (not write)
+    match /users/{userId}/{document=**} {
+      allow read: if (request.auth != null && request.auth.uid == userId) || isAdmin();
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
